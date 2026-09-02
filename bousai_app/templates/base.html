@@ -20,22 +20,94 @@
     header {
       background-color: #1e5a96;
       color: white;
-      padding: 15px 20px;
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+      flex-wrap: wrap;
     }
 
     header h1 {
       font-size: 24px;
       font-weight: bold;
+      margin: 0;
     }
 
     .menu-icon {
       font-size: 24px;
       cursor: pointer;
       user-select: none;
+    }
+
+    /* アクセシビリティコントロール */
+    .accessibility-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 20px;
+    }
+
+    .size-buttons {
+      display: flex;
+      gap: 5px;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 5px;
+      border-radius: 4px;
+    }
+
+    .size-btn {
+      padding: 6px 10px;
+      background-color: #c8e6f5;
+      color: #333;
+      border: 1px solid #999;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .size-btn.active {
+      background-color: #5a9bd4;
+      color: white;
+    }
+
+    .size-btn:hover {
+      background-color: #a8d5f0;
+    }
+
+    .language-select {
+      padding: 6px 10px;
+      background-color: #c8e6f5;
+      color: #333;
+      border: 1px solid #999;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .speech-btn {
+      padding: 6px 10px;
+      background-color: #c8e6f5;
+      color: #333;
+      border: 1px solid #999;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .speech-btn:hover {
+      background-color: #a8d5f0;
+    }
+
+    .speech-btn.active {
+      background-color: #5a9bd4;
+      color: white;
     }
 
     /* ドロップダウンメニュー */
@@ -213,7 +285,31 @@
   <!-- ヘッダー -->
   <header>
     <h1>防災アプリ</h1>
-    <div class="menu-icon" id="menuToggle">☰</div>
+    
+    <!-- アクセシビリティコントロール -->
+    <div class="accessibility-controls">
+      <!-- 文字サイズ変更ボタン -->
+      <div class="size-buttons">
+        <button class="size-btn" id="sizeSmall" title="文字を小さくします">小</button>
+        <button class="size-btn active" id="sizeMedium" title="文字を標準サイズにします">中</button>
+        <button class="size-btn" id="sizeLarge" title="文字を大きくします">大</button>
+      </div>
+
+      <!-- 言語選択 -->
+      <select id="languageSelect" class="language-select" title="言語を選択します">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+      </select>
+
+      <!-- 文字読み上げボタン -->
+      <button id="speechBtn" class="speech-btn" title="ページの内容を読み上げます">
+        文字読
+      </button>
+
+      <!-- メニューアイコン -->
+      <div class="menu-icon" id="menuToggle">☰</div>
+    </div>
   </header>
 
   <!-- ドロップダウンメニュー -->
@@ -254,7 +350,152 @@
   </nav>
 
   <script>
-    // メニュー開閉処理
+    // ===== 文字サイズ変更機能 =====
+    const fontSizes = {
+      'small': '14px',
+      'medium': '16px',
+      'large': '18px'
+    };
+
+    const sizeButtons = {
+      'small': document.getElementById('sizeSmall'),
+      'medium': document.getElementById('sizeMedium'),
+      'large': document.getElementById('sizeLarge')
+    };
+
+    function setFontSize(size) {
+      document.body.style.fontSize = fontSizes[size];
+      localStorage.setItem('fontSize', size);
+
+      // ボタンの状態を更新
+      Object.keys(sizeButtons).forEach(key => {
+        sizeButtons[key].classList.remove('active');
+      });
+      sizeButtons[size].classList.add('active');
+    }
+
+    // 保存されたフォントサイズを復元
+    const savedSize = localStorage.getItem('fontSize') || 'medium';
+    setFontSize(savedSize);
+
+    // サイズボタンのイベントリスナー
+    sizeButtons['small'].addEventListener('click', () => setFontSize('small'));
+    sizeButtons['medium'].addEventListener('click', () => setFontSize('medium'));
+    sizeButtons['large'].addEventListener('click', () => setFontSize('large'));
+
+    // ===== 言語選択機能 =====
+    const translations = {
+      'ja': {
+        'home': 'ホーム',
+        'search': '避難所検索',
+        'register': '避難所登録',
+        'board': '指示・発信ボード',
+        'login': 'ログイン',
+        'logout': 'ログアウト'
+      },
+      'en': {
+        'home': 'Home',
+        'search': 'Shelter Search',
+        'register': 'Shelter Registration',
+        'board': 'Notice Board',
+        'login': 'Login',
+        'logout': 'Logout'
+      },
+      'zh': {
+        'home': '主页',
+        'search': '避难所搜索',
+        'register': '避难所登记',
+        'board': '公告栏',
+        'login': '登录',
+        'logout': '登出'
+      }
+    };
+
+    const languageSelect = document.getElementById('languageSelect');
+    languageSelect.addEventListener('change', function(e) {
+      const lang = e.target.value;
+      localStorage.setItem('language', lang);
+      // 言語が変更されたことをページに通知
+      console.log('言語が' + lang + 'に変更されました');
+    });
+
+    // 保存された言語を復元
+    const savedLang = localStorage.getItem('language') || 'ja';
+    languageSelect.value = savedLang;
+
+    // ===== 文字読み上げ機能 =====
+    const speechBtn = document.getElementById('speechBtn');
+    let isSpeaking = false;
+    const utterances = [];
+
+    function stopAllSpeech() {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      isSpeaking = false;
+      speechBtn.classList.remove('active');
+      utterances.length = 0;
+    }
+
+    speechBtn.addEventListener('click', function() {
+      if (!window.speechSynthesis) {
+        alert('お使いのブラウザは文字読み上げに対応していません');
+        return;
+      }
+
+      if (isSpeaking) {
+        stopAllSpeech();
+        return;
+      }
+
+      isSpeaking = true;
+      speechBtn.classList.add('active');
+
+      // ページのメインコンテンツを取得
+      const mainContent = document.querySelector('main');
+      if (!mainContent) {
+        isSpeaking = false;
+        return;
+      }
+
+      // テキストを抽出
+      let text = mainContent.innerText;
+
+      // 日本語は複数の音声で読み上げる可能性があるため、短い文に分割
+      const sentences = text.split(/[\。\.\n]+/).filter(s => s.trim().length > 0);
+
+      let currentIndex = 0;
+
+      function speakNext() {
+        if (currentIndex >= sentences.length) {
+          isSpeaking = false;
+          speechBtn.classList.remove('active');
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(sentences[currentIndex]);
+        utterance.lang = savedLang || 'ja';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        utterance.onend = function() {
+          currentIndex++;
+          speakNext();
+        };
+
+        utterance.onerror = function() {
+          isSpeaking = false;
+          speechBtn.classList.remove('active');
+        };
+
+        window.speechSynthesis.speak(utterance);
+        currentIndex++;
+      }
+
+      speakNext();
+    });
+
+    // ===== メニュー開閉処理 =====
     const menuToggle = document.getElementById('menuToggle');
     const dropdownMenu = document.getElementById('dropdownMenu');
     const dropdownOverlay = document.getElementById('dropdownOverlay');

@@ -1,23 +1,97 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>避難所登録</h2>
-<p>新しい避難所情報を登録します。</p>
+<div class="section">
+  <h2>避難所登録</h2>
+  <p>新しい避難所情報を登録します。</p>
 
-<!-- 成功・エラーメッセージ表示 -->
-{% if success %}
-  <p>{{ message }}</p>
-{% endif %}
+  <!-- 成功・エラーメッセージ表示 -->
+  {% if success %}
+    <div style="padding: 15px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724; margin-bottom: 20px;">
+      ✓ {{ message }}
+    </div>
+  {% endif %}
 
-{% if error %}
-  <p>{{ message }}</p>
-{% endif %}
+  {% if error %}
+    <div style="padding: 15px; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24; margin-bottom: 20px;">
+      ✗ {{ message }}
+    </div>
+  {% endif %}
 
-<form method="POST">
-  <p>
-    <label for="name">避難所名（必須）</label><br>
-    <input type="text" id="name" name="name">
-  </p>
-  <p><button type="submit">登録</button></p>
-</form>
+  <form method="POST" enctype="multipart/form-data">
+    <!-- 避難所名 -->
+    <div style="margin-bottom: 20px;">
+      <label for="name" style="font-weight: bold;">避難所名<span style="color: #d9534f;"> *必須</span></label><br>
+      <small style="color: #666;">（自由入力）</small>
+      <input type="text" id="name" name="name" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+    </div>
+
+    <!-- 避難所住所 -->
+    <div style="margin-bottom: 20px;">
+      <label for="address" style="font-weight: bold;">避難所住所<span style="color: #d9534f;"> *必須</span></label><br>
+      <small style="color: #666;">（自由入力）</small>
+      <input type="text" id="address" name="address" required placeholder="例）青森県青森市中央1-1-1" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+    </div>
+
+    <!-- 避難所情報 -->
+    <div style="margin-bottom: 20px;">
+      <label style="font-weight: bold;">避難所情報</label>
+      <div style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 4px;">
+        <label><input type="checkbox" name="facility_pet" value="1"> ペット可</label><br>
+        <label><input type="checkbox" name="facility_locker" value="1"> ロッカリー</label><br>
+        <label><input type="checkbox" name="facility_aircon" value="1"> 冷暖房機</label><br>
+        <label><input type="checkbox" name="facility_infection" value="1"> 感染症対策装備</label>
+      </div>
+    </div>
+
+    <!-- 被害状況 -->
+    <div style="margin-bottom: 20px;">
+      <label style="font-weight: bold;">被害状況</label>
+      <div style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 4px;">
+        <label><input type="checkbox" name="damage_electricity" value="1"> 電気</label><br>
+        <label><input type="checkbox" name="damage_food" value="1"> 食料</label><br>
+        <label><input type="checkbox" name="damage_gas" value="1"> ガス</label>
+      </div>
+    </div>
+
+    <!-- 混雑状況 -->
+    <div style="margin-bottom: 20px;">
+      <label for="congestion" style="font-weight: bold;">混雑状況<span style="color: #d9534f;"> *選択必須</span></label>
+      <select id="congestion" name="congestion" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="">-- 選択してください --</option>
+        <option value="empty">空いている</option>
+        <option value="normal">通常</option>
+        <option value="crowded">混雑</option>
+        <option value="full">満員</option>
+      </select>
+    </div>
+
+    <!-- 避難所の画像 -->
+    <div style="margin-bottom: 20px;">
+      <label for="image" style="font-weight: bold;">避難所の画像</label>
+      <div style="margin-top: 10px;">
+        <input type="file" id="image" name="image" accept="image/*" style="display: none;">
+        <button type="button" onclick="document.getElementById('image').click();" style="padding: 10px 20px; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+          アップロード
+        </button>
+        <span id="fileName" style="margin-left: 10px; color: #666;"></span>
+      </div>
+    </div>
+
+    <!-- 登録ボタン -->
+    <div style="margin-top: 30px;">
+      <button type="submit" style="width: 100%; padding: 15px; background-color: #5a9bd4; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;">
+        登録
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // ファイルアップロードのファイル名表示
+  document.getElementById('image').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name || '';
+    document.getElementById('fileName').textContent = fileName ? `✓ ${fileName}` : '';
+  });
+</script>
 {% endblock %}

@@ -29,7 +29,7 @@ PREFECTURE_CODE = "020000"  # 青森県
 AREA_NAME = "青森市"
 
 # 気象庁の二次細分区域コード（青森地方）
-AREA_CODE = "020020"
+AREA_CODE = "220100"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -282,25 +282,77 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
+# 避難所登録ページ
 @app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
     if request.method == 'POST':
         # フォームデータを取得
-        name = request.form.get('name')
+        name = request.form.get('name', '').strip()
+        address = request.form.get('address', '').strip()
+        congestion = request.form.get('congestion', '')
         
         # バリデーション
         if not name:
             return render_template('shelter_register.html', error=True, message='避難所名を入力してください')
+        if not address:
+            return render_template('shelter_register.html', error=True, message='避難所住所を入力してください')
+        if not congestion:
+            return render_template('shelter_register.html', error=True, message='混雑状況を選択してください')
+        
+        # 施設情報の取得
+        facilities = []
+        if request.form.get('facility_pet'):
+            facilities.append('ペット可')
+        if request.form.get('facility_locker'):
+            facilities.append('ロッカー')
+        if request.form.get('facility_aircon'):
+            facilities.append('冷暖房機')
+        if request.form.get('facility_infection'):
+            facilities.append('感染症対策装備')
+        
+        # 被害状況の取得
+        damages = []
+        if request.form.get('damage_electricity'):
+            damages.append('電気')
+        if request.form.get('damage_food'):
+            damages.append('食料')
+        if request.form.get('damage_gas'):
+            damages.append('ガス')
+        
+        # 画像ファイルの処理
+        image_filename = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                # 画像ファイルの保存（ファイル名はシンプルに）
+                try:
+                    from werkzeug.utils import secure_filename
+                    filename = secure_filename(image_file.filename)
+                    # ユニークなファイル名を生成
+                    import time
+                    unique_filename = f"{int(time.time())}_{filename}"
+                    upload_dir = os.path.join(APP_DIR, 'data', 'shelter_images')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    filepath = os.path.join(upload_dir, unique_filename)
+                    image_file.save(filepath)
+                    image_filename = unique_filename
+                except Exception as e:
+                    # ファイル保存に失敗してもエラーとしない
+                    pass
         
         # 新しい避難所を追加
         new_shelter = {
             'id': len(shelters) + 1,
             'name': name,
             'district': '',
-            'address': '',
-            'phone': ''
+            'address': address,
+            'phone': '',
+            'facilities': facilities,
+            'damages': damages,
+            'congestion': congestion,
+            'image': image_filename,
+            'created_at': get_japan_time()
         }
         shelters.append(new_shelter)
         
@@ -352,4 +404,4 @@ def api_weather_warnings():
     return jsonify(get_weather_warnings())
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5004)
