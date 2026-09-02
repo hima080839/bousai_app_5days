@@ -29,7 +29,7 @@ PREFECTURE_CODE = "020000"  # 青森県
 AREA_NAME = "青森市"
 
 # 気象庁の二次細分区域コード（青森地方）
-AREA_CODE = "220100"
+AREA_CODE = "0220100"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -404,4 +404,4 @@ def api_weather_warnings():
     return jsonify(get_weather_warnings())
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5004)
+    app.run(debug=True, port=5005)
