@@ -4,13 +4,241 @@
   <meta charset="utf-8">
   <title>{% block title %}防災アプリ{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      background-color: #f5f5f5;
+    }
+
+    /* ヘッダースタイル */
+    header {
+      background-color: #1e5a96;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .menu-icon {
+      font-size: 24px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ドロップダウンメニュー */
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      min-width: 250px;
+    }
+
+    .dropdown-menu.active {
+      display: block;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 15px 20px;
+      color: #333;
+      text-decoration: none;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+
+    .dropdown-menu a:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-menu a:hover {
+      background-color: #f5f5f5;
+      color: #1e5a96;
+      font-weight: bold;
+    }
+
+    .dropdown-menu .menu-logout {
+      color: #d9534f;
+    }
+
+    .dropdown-menu .menu-logout:hover {
+      background-color: #ffe0e0;
+      color: #c9302c;
+    }
+
+    .dropdown-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+    }
+
+    .dropdown-overlay.active {
+      display: block;
+    }
+
+    /* メインコンテンツ */
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* セクションスタイル */
+    .section {
+      background-color: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1e5a96;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title-icon {
+      font-size: 22px;
+    }
+
+    /* 地図スタイル */
+    #shelterMap {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #e0e0e0;
+    }
+
+    /* 警報情報セクション */
+    .warning-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .update-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #16a34a;
+      font-size: 14px;
+    }
+
+    .warning-content {
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+
+    .warning-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .area-icon {
+      font-size: 18px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .status-check {
+      color: #16a34a;
+      font-size: 20px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .info-icon {
+      font-size: 16px;
+      width: 16px;
+      text-align: center;
+    }
+
+    /* ナビゲーション（非表示） */
+    nav {
+      display: none;
+    }
+
+    hr {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <!-- ヘッダー -->
-  <h1>防災アプリ</h1>
+  <header>
+    <h1>防災アプリ</h1>
+    <div class="menu-icon" id="menuToggle">☰</div>
+  </header>
 
-  <!-- ナビゲーション -->
-  <nav>
+  <!-- ドロップダウンメニュー -->
+  <div class="dropdown-overlay" id="dropdownOverlay"></div>
+  <div class="dropdown-menu" id="dropdownMenu">
+    <a href="/">🏠 ホーム</a>
+    <a href="/shelter_search">🔍 避難所検索</a>
+    <a href="/shelter_register">📝 避難所登録</a>
+    <a href="/board">📢 指示・発信ボード</a>
+    <hr style="margin: 0;">
+    {% if session.logged_in %}
+      <a style="padding: 10px 20px; color: #666; font-size: 14px;">ログイン中: {{ session.username or 'ユーザー' }}</a>
+      <a href="/logout" class="menu-logout">🚪 ログアウト</a>
+    {% else %}
+      <a href="/login">🔐 ログイン</a>
+    {% endif %}
+  </div>
+
+  <main>
+    <!-- ここに子テンプレートの content が入る -->
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ナビゲーション（隠し） -->
+  <nav style="display: none;">
     <a href="/">ホーム</a> |
     <a href="/shelter_search">避難所検索</a> |
     <a href="/shelter_register">避難所登録</a> |
@@ -24,11 +252,42 @@
       <a href="/login">ログイン</a>
     {% endif %}
   </nav>
-  <hr>
 
-  <main>
-    <!-- ここに子テンプレートの content が入る -->
-    {% block content %}{% endblock %}
-  </main>
+  <script>
+    // メニュー開閉処理
+    const menuToggle = document.getElementById('menuToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const dropdownOverlay = document.getElementById('dropdownOverlay');
+
+    // メニューアイコンをクリック
+    menuToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('active');
+      dropdownOverlay.classList.toggle('active');
+    });
+
+    // メニュー項目をクリック
+    const menuItems = dropdownMenu.querySelectorAll('a');
+    menuItems.forEach(item => {
+      item.addEventListener('click', function() {
+        dropdownMenu.classList.remove('active');
+        dropdownOverlay.classList.remove('active');
+      });
+    });
+
+    // オーバーレイをクリック（メニューを閉じる）
+    dropdownOverlay.addEventListener('click', function() {
+      dropdownMenu.classList.remove('active');
+      dropdownOverlay.classList.remove('active');
+    });
+
+    // 他の場所をクリック（メニューを閉じる）
+    document.addEventListener('click', function(e) {
+      if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        dropdownMenu.classList.remove('active');
+        dropdownOverlay.classList.remove('active');
+      }
+    });
+  </script>
 </body>
 </html>

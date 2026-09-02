@@ -28,8 +28,8 @@ ADMIN_CREDENTIALS = {
 PREFECTURE_CODE = "020000"  # 青森県
 AREA_NAME = "青森市"
 
-# ワークショップ課題：青森市の市区町村コードに変更する
-AREA_CODE = "1420500"
+# 気象庁の二次細分区域コード（青森地方）
+AREA_CODE = "020020"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -165,13 +165,14 @@ def parse_area_warnings(warning_data):
         if not isinstance(warning, dict):
             continue
 
-        class20_items = warning.get("class20Items", [])
-        if not isinstance(class20_items, list):
+        # 二次細分区域（class10Items）から対象地域の警報・注意報を抽出
+        class10_items = warning.get("class10Items", [])
+        if not isinstance(class10_items, list):
             continue
 
         area = next(
             (
-                item for item in class20_items
+                item for item in class10_items
                 if isinstance(item, dict)
                 and item.get("areaCode") == AREA_CODE
             ),
@@ -190,18 +191,22 @@ def parse_area_warnings(warning_data):
 
             status = kind.get("status", "")
             code = kind.get("code", "")
-            if status not in ("発表", "継続") or not code or code in seen_codes:
+            
+            # 警報・注意報なしのメッセージは除外
+            if status == "発表警報・注意報はなし" or not code or code in seen_codes:
                 continue
-
-            warnings.append({
-                "name": WARNING_CODES.get(
-                    code,
-                    f"不明な警報・注意報 (コード: {code})"
-                ),
-                "code": code,
-                "status": status
-            })
-            seen_codes.add(code)
+            
+            # 発表中または継続中の警報・注意報のみ
+            if status in ("発表", "継続"):
+                warnings.append({
+                    "name": WARNING_CODES.get(
+                        code,
+                        f"不明な警報・注意報 (コード: {code})"
+                    ),
+                    "code": code,
+                    "status": status
+                })
+                seen_codes.add(code)
 
     latest_report_datetime = max(report_datetimes, default="")
     return warnings, latest_report_datetime
@@ -278,9 +283,30 @@ def logout():
     return redirect(url_for('index'))
 
 # 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
-@app.route('/shelter_register')
+@app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
+    if request.method == 'POST':
+        # フォームデータを取得
+        name = request.form.get('name')
+        
+        # バリデーション
+        if not name:
+            return render_template('shelter_register.html', error=True, message='避難所名を入力してください')
+        
+        # 新しい避難所を追加
+        new_shelter = {
+            'id': len(shelters) + 1,
+            'name': name,
+            'district': '',
+            'address': '',
+            'phone': ''
+        }
+        shelters.append(new_shelter)
+        
+        # 登録成功
+        return render_template('shelter_register.html', success=True, message='避難所を登録しました')
+    
     return render_template('shelter_register.html')
 
 # 避難所検索ページ
@@ -326,4 +352,4 @@ def api_weather_warnings():
     return jsonify(get_weather_warnings())
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5002)

@@ -2,14 +2,29 @@
 
 {% block content %}
 <!-- 避難所マップ -->
-<h2>避難所マップ</h2>
-<div id="shelterMap" style="height: 300px;"></div>
+<div class="section">
+  <h2 class="section-title">
+    <span class="section-title-icon">📍</span>
+    避難所マップ
+  </h2>
+  <div id="shelterMap" style="height: 350px;"></div>
+</div>
 
 <!-- 気象警報・注意報 -->
-<h2>青森市 気象警報・注意報</h2>
-<p>10分おきに自動更新されます。</p>
-<div id="weatherContent">
-  <p>読み込み中...</p>
+<div class="section">
+  <div class="warning-header">
+    <h2 class="section-title">
+      <span class="section-title-icon">⛅</span>
+      青森市 気象警報・注意報
+    </h2>
+    <div class="update-info">
+      <span>♻</span>
+      10分おき自動更新
+    </div>
+  </div>
+  <div id="weatherContent" class="warning-content">
+    <p>読み込み中...</p>
+  </div>
 </div>
 
 <!-- Leaflet の読み込み -->
@@ -49,20 +64,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let warningsHtml = '';
         if (data.warnings && data.warnings.length > 0) {
-            warningsHtml = '<ul>';
+            warningsHtml = '<div style="margin-bottom: 15px;">';
             data.warnings.forEach(warning => {
-                warningsHtml += `<li>${warning.name}（${warning.status}）</li>`;
+                warningsHtml += `<div class="status-row"><span class="status-check">⚠️</span><span>${warning.name}（${warning.status}）</span></div>`;
             });
-            warningsHtml += '</ul>';
+            warningsHtml += '</div>';
         } else {
-            warningsHtml = '<p>現在、警報・注意報は発表されていません</p>';
+            warningsHtml = `<div class="status-row"><span class="status-check">✓</span><span>現在、警報・注意報は発表されていません</span></div>`;
         }
 
         weatherContent.innerHTML = `
-            <p>対象地域: ${data.area_name || '青森市'}</p>
+            <div class="warning-area">
+              <span class="area-icon">📍</span>
+              <span>${data.area_name || '青森市'}</span>
+            </div>
             ${warningsHtml}
-            <p>最終確認: <span id="lastFetchTime">${data.last_fetch_time || '更新中...'}</span></p>
-            <p>気象庁最終発表: ${data.report_time || '不明'}</p>
+            <div class="info-row">
+              <span class="info-icon">🕐</span>
+              <span>データ取得: ${data.last_fetch_time || '更新中...'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-icon">📡</span>
+              <span>気象庁発表: ${data.report_time || '不明'}</span>
+            </div>
         `;
     }
 
